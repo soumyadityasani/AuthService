@@ -1,5 +1,6 @@
 package com.canteen.authService.config;
 
+
 import com.canteen.authService.util.CookieJwtFilter;
 import com.canteen.authService.util.JwtFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +44,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auth/verify-email").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-email").permitAll()
                         .requestMatchers( "/api/auth/**").permitAll()
+                        .requestMatchers(
+                                "swagger-ui/**",
+                                 "/swagger-ui.html",
+                                 "/v3/api-docs/**",
+                                 "/v3/api-docs",
+                                 "/swagger-resources/**",
+                                 "/webjars/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session->session
@@ -67,7 +76,9 @@ public class SecurityConfig {
                         .requestMatchers("/", "/auth/**","/css/**", "/js/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
+                                "/swagger-ui.html",
                                 "/v3/api-docs/**",
+                                "/v3/api-docs",
                                 "/swagger-resources/**",
                                 "/webjars/**"
                         ).permitAll()

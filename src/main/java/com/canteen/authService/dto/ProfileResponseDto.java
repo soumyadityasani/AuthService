@@ -12,8 +12,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ProfileResponseDto {
 
-    private String message;
-
     private String username;
     private String collegeRoll;
     private String email;

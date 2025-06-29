@@ -110,12 +110,12 @@ public class AuthService {
     }
 
     @Transactional
-    public ResponseEntity<String> sentVerifyEmail(String email){
+    public ResponseEntity<ApiResonseDto<String>> sentVerifyEmail(String email){
 
         try {
 
             if (pendingEmailRepo.existsById(email)) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body(MessagesEnum.EMAIL_PENDING_VERIFICATION.getMessage());
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResonseDto<>(false,MessagesEnum.EMAIL_PENDING_VERIFICATION.getMessage(), null,LocalDateTime.now()));
             }
 
             //GENERATE TOKEN
@@ -135,14 +135,13 @@ public class AuthService {
 
                 pendingEmailRepo.save(emailVerification);
 
-                return ResponseEntity.ok(MessagesEnum.EMAIL_VERIFICATION_SEND.getMessage());
+                return ResponseEntity.ok(new ApiResonseDto<>(true,MessagesEnum.EMAIL_VERIFICATION_SEND.getMessage(), null,LocalDateTime.now()));
             }else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MessagesEnum.FAILED_TO_SEND_EMAIL_VERIFICATION.getMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResonseDto<>(false,MessagesEnum.FAILED_TO_SEND_EMAIL_VERIFICATION.getMessage(), null,LocalDateTime.now()));
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(MessagesEnum.FAILED_TO_SEND_EMAIL_VERIFICATION.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResonseDto<>(false,MessagesEnum.FAILED_TO_SEND_EMAIL_VERIFICATION.getMessage(), null,LocalDateTime.now()));
         }
     }
 
@@ -206,13 +205,13 @@ public class AuthService {
 
     }
 
-    public ResponseEntity<String> sendOtpToContact(String contact){
+    public ResponseEntity<ApiResonseDto<String>> sendOtpToContact(String contact){
         boolean sent = otpService.sendOtp(contact);
 
         if(sent){
-            return ResponseEntity.ok(MessagesEnum.OTP_SENT_SUCCESSFUL.getMessage());
+            return ResponseEntity.ok(new ApiResonseDto<>(true,MessagesEnum.OTP_SENT_SUCCESSFUL.getMessage(), null,LocalDateTime.now()));
         }else{
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(MessagesEnum.FAILED_TO_SEND_OTP.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResonseDto<>(false,MessagesEnum.FAILED_TO_SEND_OTP.getMessage(), null,LocalDateTime.now()));
         }
     }
 
@@ -266,18 +265,17 @@ public class AuthService {
 
     }
 
-    public ResponseEntity<ProfileResponseDto> profileUser(Authentication auth){
+    public ResponseEntity<ApiResonseDto<ProfileResponseDto>> profileUser(Authentication auth){
 
         //UNAUTHENTICATED USER
         if(auth==null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ProfileResponseDto(MessagesEnum.UNAUTHORISED_USER.getMessage(), null,null,null,null,null));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResonseDto<>(false,MessagesEnum.UNAUTHORISED_USER.getMessage(), null,LocalDateTime.now()));
         }
 
         MyUserDetails userDetails=(MyUserDetails) auth.getPrincipal();
 
         //BUILD THE PROFILERESPONSEDTO
         ProfileResponseDto profileResponseDto=ProfileResponseDto.builder()
-                .message(MessagesEnum.USER_PROFILE.getMessage())
                 .username(userDetails.getFullName())
                 .collegeRoll(userDetails.getCollegeRoll())
                 .email(userDetails.getUsername())
@@ -285,18 +283,18 @@ public class AuthService {
                 .role(userDetails.getRole())
                 .build();
 
-        return ResponseEntity.ok(profileResponseDto);
+        return ResponseEntity.ok(new ApiResonseDto<>(true,MessagesEnum.USER_PROFILE.getMessage(), profileResponseDto,LocalDateTime.now()));
 
     }
 
-    public ResponseEntity<UpdateUserResponseDto> updateUser(UpdateUserRequestDto updateRequestDto, Authentication authentication) {
+    public ResponseEntity<ApiResonseDto<UpdateUserResponseDto>> updateUser(UpdateUserRequestDto updateRequestDto, Authentication authentication) {
 
         boolean isContactChang=false;
         boolean isEmailChang=false;
 
         //VERIFY AUTHENTICATION OBJ
         if(authentication==null || !authentication.isAuthenticated()){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new UpdateUserResponseDto(MessagesEnum.UNAUTHORISED_USER.getMessage(),false,false));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResonseDto<>(false,MessagesEnum.UNAUTHORISED_USER.getMessage(), null,LocalDateTime.now()));
         }
 
         MyUserDetails userDetails=(MyUserDetails) authentication.getPrincipal();
@@ -325,17 +323,38 @@ public class AuthService {
         userRepo.save(user);
 
         if(isEmailChang && isContactChang){
-            return ResponseEntity.ok(new UpdateUserResponseDto(MessagesEnum.USER_PROFILE_UPDATED_SUCCESSFUL.getMessage(),true,true));
+
+            UpdateUserResponseDto responseDto=UpdateUserResponseDto.builder()
+                    .isEmailChanged(true)
+                    .isContactChanged(true)
+                    .build();
+
+            return ResponseEntity.ok(new ApiResonseDto<>(true,MessagesEnum.USER_PROFILE_UPDATED_SUCCESSFUL.getMessage(), responseDto,LocalDateTime.now()));
         } else if (isEmailChang) {
-            return ResponseEntity.ok(new UpdateUserResponseDto(MessagesEnum.USER_PROFILE_UPDATED_SUCCESSFUL.getMessage(),true,false));
+            UpdateUserResponseDto responseDto=UpdateUserResponseDto.builder()
+                    .isEmailChanged(true)
+                    .isContactChanged(false)
+                    .build();
+
+            return ResponseEntity.ok(new ApiResonseDto<>(true,MessagesEnum.USER_PROFILE_UPDATED_SUCCESSFUL.getMessage(), responseDto,LocalDateTime.now()));
         }else if(isContactChang){
-            return ResponseEntity.ok(new UpdateUserResponseDto(MessagesEnum.USER_PROFILE_UPDATED_SUCCESSFUL.getMessage(),false,true));
+            UpdateUserResponseDto responseDto=UpdateUserResponseDto.builder()
+                    .isEmailChanged(false)
+                    .isContactChanged(true)
+                    .build();
+
+            return ResponseEntity.ok(new ApiResonseDto<>(true,MessagesEnum.USER_PROFILE_UPDATED_SUCCESSFUL.getMessage(), responseDto,LocalDateTime.now()));
         }else {
-            return ResponseEntity.ok(new UpdateUserResponseDto(MessagesEnum.USER_PROFILE_UPDATED_SUCCESSFUL.getMessage(),false,false));
+            UpdateUserResponseDto responseDto=UpdateUserResponseDto.builder()
+                    .isEmailChanged(false)
+                    .isContactChanged(false)
+                    .build();
+
+            return ResponseEntity.ok(new ApiResonseDto<>(true,MessagesEnum.USER_PROFILE_UPDATED_SUCCESSFUL.getMessage(), responseDto,LocalDateTime.now()));
         }
     }
 
-    public ResponseEntity<ChangePasswordResponseDto> changePassword(String password, String newPassword, Authentication auth) {
+    public ResponseEntity<ApiResonseDto<ChangePasswordResponseDto>> changePassword(String password, String newPassword, Authentication auth) {
         try {
             MyUserDetails userDetails = (MyUserDetails) auth.getPrincipal();
 
@@ -349,19 +368,17 @@ public class AuthService {
 
                 userRepo.save(user);
 
-                return ResponseEntity.status(HttpStatus.ACCEPTED).body(new ChangePasswordResponseDto(MessagesEnum.PASSWORD_CHANGE.getMessage(), true));
+                return ResponseEntity.status(HttpStatus.ACCEPTED).body(new ApiResonseDto<>(true,MessagesEnum.PASSWORD_CHANGE.getMessage(), new ChangePasswordResponseDto(true),LocalDateTime.now()));
             }
 
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ChangePasswordResponseDto(MessagesEnum.PASSWORD_NOT_CHANGE.getMessage(), false));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResonseDto<>(false,MessagesEnum.PASSWORD_NOT_CHANGE.getMessage(), new ChangePasswordResponseDto(false),LocalDateTime.now()));
         }catch (Exception e){
 
-            e.printStackTrace();
-
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ChangePasswordResponseDto(MessagesEnum.PASSWORD_NOT_CHANGE.getMessage(), false));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiResonseDto<>(false,MessagesEnum.PASSWORD_NOT_CHANGE.getMessage(), new ChangePasswordResponseDto(false),LocalDateTime.now()));
         }
     }
 
-    public ResponseEntity<String> forgotPasswordEmail(String email) {
+    public ResponseEntity<ApiResonseDto<String>> forgotPasswordEmail(String email) {
 
         User user=userRepo.findByEmail(email)
                 .orElseThrow(()->new UserNotFoundException(ErrorCodeEnum.S_404.getMessage()));
@@ -379,7 +396,7 @@ public class AuthService {
 
            userRepo.save(user);
 
-           return ResponseEntity.status(HttpStatus.CREATED).body(MessagesEnum.NEW_PASSWORD_SEND.getMessage());
+           return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResonseDto<>(true,MessagesEnum.NEW_PASSWORD_SEND.getMessage(), null,LocalDateTime.now()));
 
     }
 

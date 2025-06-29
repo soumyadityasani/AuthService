@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UpdateUserResponseDto {
 
-    private String message;
     private boolean isEmailChanged;
     private boolean isContactChanged;
 

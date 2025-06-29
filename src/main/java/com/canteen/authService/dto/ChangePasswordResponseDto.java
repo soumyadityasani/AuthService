@@ -11,6 +11,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ChangePasswordResponseDto {
 
-    private String message;
     private boolean passwordChanged;
 }

@@ -25,7 +25,7 @@ public class AuthController {
     }
 
     @GetMapping("/verify-email-link")
-    public ResponseEntity<String> sendEmail(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email) throws IOException {
+    public ResponseEntity<ApiResonseDto<String>> sendEmail(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email) throws IOException {
         return authService.sentVerifyEmail(email);
     }
 
@@ -35,17 +35,17 @@ public class AuthController {
     }
 
     @GetMapping("/verify-email-code")
-    public ResponseEntity<?> sendEmailCode(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email){
+    public ResponseEntity<ApiResonseDto<String>> sendEmailCode(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email){
         return authService.sendOtpToEmail(email);
     }
 
     @PostMapping("/verify-email-code")
-    public ResponseEntity<?> verifyEmailCode(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email, @RequestParam @Size(max=6 ,message = "MAX 6 CHARACTER") String code){
+    public ResponseEntity<ApiResonseDto<VerificationResponseDto>> verifyEmailCode(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email, @RequestParam @Size(max=6 ,message = "MAX 6 CHARACTER") String code){
         return authService.verifyEmailOtp(email,code);
     }
 
     @PostMapping("/sent-otp")
-    public ResponseEntity<String> sentOtp(@RequestParam @Size(max = 10, message = "MAX 10 DIGIT") String contact){
+    public ResponseEntity<ApiResonseDto<String>> sentOtp(@RequestParam @Size(max = 10, message = "MAX 10 DIGIT") String contact){
         return authService.sendOtpToContact(contact);
     }
 
@@ -60,22 +60,22 @@ public class AuthController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<ProfileResponseDto> getCurrentUserProfile(Authentication auth){
+    public ResponseEntity<ApiResonseDto<ProfileResponseDto>> getCurrentUserProfile(Authentication auth){
         return authService.profileUser(auth);
     }
 
     @PutMapping("/update")
-    public ResponseEntity<UpdateUserResponseDto> updateUserProfile( @Valid @RequestBody UpdateUserRequestDto requestDto,Authentication authentication){
+    public ResponseEntity<ApiResonseDto<UpdateUserResponseDto>> updateUserProfile( @Valid @RequestBody UpdateUserRequestDto requestDto,Authentication authentication){
         return authService.updateUser(requestDto,authentication);
     }
 
     @PutMapping("/change-password")
-    public ResponseEntity<ChangePasswordResponseDto> changePassword(@RequestBody ChangePasswordRequestDto requestDto, Authentication auth){
+    public ResponseEntity<ApiResonseDto<ChangePasswordResponseDto>> changePassword( @Valid @RequestBody ChangePasswordRequestDto requestDto, Authentication auth){
         return authService.changePassword(requestDto.getPassword(),requestDto.getNewPassword(),auth);
     }
 
-    @PutMapping("/forgot-password-email")
-    public ResponseEntity<String> forgotPassword(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email){
+    @PostMapping("/forgot-password-email")
+    public ResponseEntity<ApiResonseDto<String>> forgotPassword(@RequestParam @Email @Size(max = 50, message = "MAX 50 DIGIT") String email){
         return authService.forgotPasswordEmail(email);
     }
 
