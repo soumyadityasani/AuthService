@@ -7,7 +7,10 @@ import org.springframework.context.ConfigurableApplicationContext;
 public class EnvInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
     @Override
     public void initialize(ConfigurableApplicationContext applicationContext) {
-        Dotenv dotenv = Dotenv.load();
+        //Will not throw if .env is missing
+        Dotenv dotenv = Dotenv.configure()
+                .ignoreIfMissing()  // ✅ This is the key line
+                .load();
 
         System.setProperty("DB_HOST", dotenv.get("DB_HOST"));
         System.setProperty("DB_PORT", dotenv.get("DB_PORT"));
